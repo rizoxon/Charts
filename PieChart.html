@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<title>Pie Chart</title>
+		<style>
+			:root{
+				--color-text-primary: black;
+				--color-text-secondary: grey;
+			}
+
+			body{
+				background-color: hsla(230deg, 13%, 9%, 1);
+				color: white;
+				height: 100dvh;
+
+				display: grid;
+				place-items: center;
+				overflow: hidden;
+			}
+			div{
+				background-color: aliceblue;
+				width: 90dvw;
+				height: 90dvh;
+			}
+
+
+		</style>
+		<script type="module" src="../source/Charts/Pie2.js"></script>
+	</head>
+	<body>
+		<div>
+			<x-pie-chart>
+				{
+					"title":"Pie Graph",
+					"legends": true,
+					"data": [
+						{
+							"label": "Nvidia",
+							"color": "#ff6384 ",
+							"value": 150
+						},
+						{
+							"label": "Microsoft",
+							"color": "#ffce56",
+							"value": 50
+						},
+						{
+							"label": "Apple",
+							"color": "#36a2eb",
+							"value": 75
+						},
+						{
+							"label": "Some very long title",
+							"color": "#36a2b3",
+							"value": 200
+						}
+					]
+				}
+			</x-pie-chart>
+		</div>
+	</body>
+</html>
