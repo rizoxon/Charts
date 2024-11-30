@@ -1,128 +1,260 @@
-function draw_pie_chart(data, title){
-	// let canvas = document.querySelector("canvas");
-	// canvas.width = window.innerWidth - 200;
-	// canvas.height = window.innerHeight - 200;
-	// let ctx = canvas.getContext("2d");
+export default class Pie extends HTMLElement {
+	#data;
+	#canvas;
+	#ctx;
+	#animation_frame = null;
 
-	// Create tooltip
-	// let tooltip = document.createElement('div');
-	// tooltip.style.position = 'absolute';
-	// tooltip.style.display = 'none';
-	// tooltip.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
-	// tooltip.style.color = 'white';
-	// tooltip.style.padding = '5px';
-	// tooltip.style.borderRadius = '5px';
-	// tooltip.style.fontSize = '14px';
-	// tooltip.style.pointerEvents = 'none';
-	// document.body.appendChild(tooltip);
+	#tooltip;
 
-	// let measure = {
-	// 	"x": canvas.width / 2,
-	// 	"y": canvas.height / 2,
-	// 	"radius": Math.min(canvas.width, canvas.height) / 3,
-	// }
+	#text_color = getComputedStyle(document.querySelector(":root")).getPropertyValue("--color-text-primary");
+	#font_family = "Quicksand";
+	#hue = "230deg";
 
-	// let total_value = 0;
-	// for(const item of data) total_value += item["value"];
+	#x_center;
+	#y_center;
+	#pie_radius;
+	#padding = 20;
+	#hover_grow = 20;
 
-	// let start_angle = 0;
-	// let slices = [];
-	// for(const item of data){
-	// 	let slice_angle = (item["value"] / total_value) * 2 * Math.PI;
-	// 	slices.push({
-	// 		start: start_angle,
-	// 		end: start_angle + slice_angle,
-	// 		color: item.color,
-	// 		label: item.label,
-	// 		value: item.value,
-	// 		hovered: false
-	// 	})
-	// 	start_angle += slice_angle;
-	// }
+	#total_value = 0;
+	#slices = [];
 
-	// function draw_slice(slice, is_hovered){
-	// 	ctx.beginPath();
-	// 	ctx.moveTo(measure.x, measure.y);
-	// 	ctx.arc(measure.x, measure.y, measure.radius + (is_hovered ? 20 : 0), slice.start, slice.end);
-	// 	ctx.closePath();
+	constructor(){
+		super();
 
-	// 	ctx.globalAlpha = is_hovered ? 1 : 0.8;
-	// 	ctx.fillStyle = slice.color;
-	// 	ctx.fill();
+		this.shadow = this.attachShadow({ mode: "closed" });
+		this.#data = JSON.parse(this.innerHTML);
 
-	// 	ctx.globalAlpha = 1;
-	// 	ctx.lineWidth = 5;
-	// 	ctx.strokeStyle = "#fff";
-	// 	ctx.stroke();
-	// }
+		// Style element
+		const style = document.createElement("style");
+		style.textContent = `
+			:host{
+				display: inline-block;
+				width: 100%;
+				height: 100%;
+				max-width: 100dvw;
+				max-height: 100dvh;
+			}
+			canvas{
+				width: 100%;
+				height: 100%;
+			}
+			div#XE_charts_pie_tooltip{
+				position: absolute;
+				display: none;
+				background-color: rgba(0, 0, 0, 0.7);
+				color: white;
+				padding: 5px;
+				border-radius: 5px;
+				pointer-events: none;
+				font-size: 0.6em;
+			}
+		`;
+		this.shadow.appendChild(style);
 
-	// function draw_labels() {
-	// 	ctx.font = "16px Arial";
-	// 	ctx.textAlign = "left";
-	// 	ctx.textBaseline = "top";
+		// Tooltip element
+		this.#tooltip = document.createElement("div");
+		this.#tooltip.setAttribute("id", "XE_charts_pie_tooltip");
+		this.shadow.appendChild(this.#tooltip);
 
-	// 	let y = 20;
-	// 	for (const slice of slices) {
-	// 		ctx.fillStyle = slice.color;
-	// 		ctx.fillRect(20, y, 20, 16);
-	// 		ctx.fillStyle = "#000";
-	// 		ctx.fillText(`${slice.label}: ${slice.value}`, 50, y);
-	// 		y += 30;
-	// 	}
-	// }
+		// Canvas element
+		this.#canvas = document.createElement("canvas");
+		this.shadow.appendChild(this.#canvas);
+		this.#ctx = this.#canvas.getContext("2d");
 
-	// function draw_title() {
-	// 	ctx.font = "24px Arial";
-	// 	ctx.textAlign = "center";
-	// 	ctx.textBaseline = "top";
-	// 	ctx.fillText(title, measure.x, 10);
-	// }
-
-	function redraw_chart(){
-		ctx.clearRect(0, 0, canvas.width, canvas.height);
-		for(const slice of slices) draw_slice(slice, slice.hovered);
-		draw_labels();
-		draw_title();
+		this.#resize_observer();
 	}
 
-	canvas.addEventListener("mousemove", event => {
-		const rect = canvas.getBoundingClientRect();
-		const x = event.clientX - rect.left - measure.x;
-		const y = event.clientY - rect.top - measure.y;
-		const mouse_angle = (Math.atan2(y, x) + 2 * Math.PI) % (2 * Math.PI);
-		const distance = Math.sqrt(x * x + y * y);
+	disconnectedCallback(){	cancelAnimationFrame(this.#animation_frame); }
 
-		let needs_redraw = false;
-		let hovered_slice = null;
-		for(const slice of slices){
-			const is_hovered = distance <= measure.radius && mouse_angle >= slice.start && mouse_angle < slice.end;
+	////// APIs
+	#resize_observer(){
+		const resize_observer_object = new ResizeObserver(this.#init);
+		resize_observer_object.observe(this.parentNode);
+	}
 
-			if(slice.hovered !== is_hovered){
-				slice.hovered = is_hovered;
-				needs_redraw = true;
-			}
+	#init = ()=>{
+		this.#set_up_canvas();
+		this.#init_values();
+		this.#init_slices();
+		this.#init_draw_canvas();
+		this.#init_on_hover_pie();
+	}
 
-			if(is_hovered == true) hovered_slice = slice;
+	////// Helpers
+	#set_up_canvas(){
+		const DPR = window.devicePixelRatio || 1;
+
+		// First set CSS dimensions
+		this.#canvas.style.width = '100%';
+		this.#canvas.style.height = '100%';
+
+		// Get the size in CSS pixels after CSS is applied
+		const computed_style = getComputedStyle(this.#canvas);
+		const css_width = parseFloat(computed_style.width);
+		const css_height = parseFloat(computed_style.height);
+
+		// Adjust canvas buffer size for DPR
+		this.#canvas.width = css_width * DPR;
+		this.#canvas.height = css_height * DPR;
+
+		// Important: Save these CSS pixel values for calculations
+		this.#x_center = css_width / 2;
+		this.#y_center = css_height / 2;
+		this.#pie_radius = Math.min(css_width, css_height) / 3;
+
+		// Scale the context for DPR
+		this.#ctx.scale(DPR, DPR);
+	}
+
+	#init_values(){
+		if("text_color" in this.#data) this.#text_color = this.#data["text_color"];
+		if("hue" in this.#data) this.#hue = this.#data["hue"];
+		if("font_family" in this.#data) this.#font_family = this.#data["font_family"];
+		if("background" in this.#data) this.#canvas.style.background = this.#data["background"];
+	}
+
+	#init_slices(){
+		this.#total_value = 0;
+		const sorted_slice_values = [];
+
+		for(const slice of this.#data["pie"]){
+			this.#total_value += slice["value"];
+			sorted_slice_values.push(slice["value"]);
 		}
 
-		if(hovered_slice != null) {
-			let tooltip_height = tooltip.getBoundingClientRect().height;
-			tooltip.style.display = 'block';
-			tooltip.style.left = event.pageX + 'px';
-			tooltip.style.top = event.pageY - tooltip_height - 5 + 'px';
-			tooltip.textContent = `${hovered_slice.label}: ${hovered_slice.value}`;
-		}else tooltip.style.display = 'none';
+		sorted_slice_values.sort((a, b) => b - a);
 
-		if(needs_redraw) redraw_chart();
-	})
 
-	redraw_chart()
+		this.#slices = [];
+		let start_angle = 0;
+
+		for(const slice of this.#data["pie"]){
+			const slice_angle = (slice["value"] / this.#total_value) * 2 * Math.PI;
+
+			const index_of_this_value = sorted_slice_values.indexOf(slice["value"]);
+			const saturation = 20 + (60 / (this.#data["pie"].length)) * index_of_this_value;
+			const lightness = 20 + (60 / (this.#data["pie"].length)) * index_of_this_value;
+
+			this.#slices.push({
+				start: start_angle,
+				end: start_angle + slice_angle,
+				label: slice["label"],
+				value: slice["value"],
+				percent: ((slice["value"] / this.#total_value) * 100).toFixed(2),
+				color: `hsl(${this.#hue}, ${saturation}%, ${lightness}%)`,
+				hovered: false,
+				current_radius: this.#pie_radius  // Initialize here
+			});
+			start_angle += slice_angle;
+		}
+	}
+
+	#init_draw_canvas(){
+		this.#ctx.clearRect(0, 0, this.#canvas.width, this.#canvas.height);
+
+		this.#draw_slices();
+		this.#draw_legends();
+	}
+
+	#draw_slices(){
+		let needs_animation = false;
+
+		for(const slice of this.#slices){
+			// Animate radius
+			if(slice.hovered && slice.current_radius < this.#pie_radius + this.#hover_grow){
+				slice.current_radius += 1.5; // Speed of grow animation
+				needs_animation = true;
+			}
+
+			else if(!slice.hovered && slice.current_radius > this.#pie_radius){
+				slice.current_radius -= 1.5; // Speed of shrink animation
+				needs_animation = true;
+			}
+
+			this.#ctx.beginPath();
+			this.#ctx.moveTo(this.#x_center, this.#y_center);
+			this.#ctx.arc(
+				this.#x_center,
+				this.#y_center,
+				slice.current_radius,
+				slice.start,
+				slice.end
+			);
+			this.#ctx.closePath();
+
+			this.#ctx.globalAlpha = slice["hovered"] ? 1 : 0.8;
+			this.#ctx.fillStyle = slice["color"];
+			this.#ctx.fill();
+
+			// Border
+			this.#ctx.globalAlpha = 1;
+			this.#ctx.lineWidth = 2;
+			this.#ctx.strokeStyle = "white";
+			this.#ctx.stroke();
+		}
+
+		// Continue animation if needed
+		if(needs_animation){
+			cancelAnimationFrame(this.#animation_frame);  // Cancel previous frame
+			this.#animation_frame = requestAnimationFrame(()=>this.#init_draw_canvas());
+		}
+	}
+
+	#draw_legends(){
+		if(!("legends" in this.#data) || this.#data["legends"] !== true) return;
+
+		this.#ctx.font = `0.6em ${this.#font_family}`;
+		this.#ctx.textAlign = "left";
+		this.#ctx.textBaseline = "top";
+		this.#ctx.globalAlpha = 1;
+
+		let y = this.#padding;
+		for(const slice of this.#slices){
+			this.#ctx.beginPath();
+			this.#ctx.roundRect(this.#padding, y, 30, 20, 5);
+			this.#ctx.fillStyle = slice["color"];
+			this.#ctx.fill();
+
+			this.#ctx.fillStyle = this.#text_color;
+			this.#ctx.fillText(`${slice["label"]}: ${slice["value"]} (${slice["percent"]}%)`, 60, y+5);
+
+			y += 30;
+		}
+	}
+
+	#init_on_hover_pie(){
+		this.#canvas.addEventListener("mousemove", (event)=>{
+			const rect = this.#canvas.getBoundingClientRect();
+			const x = event.clientX - rect.left - this.#x_center;
+			const y = event.clientY - rect.top - this.#y_center;
+			const mouse_angle = (Math.atan2(y, x) + 2 * Math.PI) % (2 * Math.PI);
+			const distance = Math.sqrt(x * x + y * y);
+
+			let needs_redraw = false;
+			let hovered_slice = null;
+			for(const slice of this.#slices){
+				const is_hovered = distance <= this.#pie_radius && mouse_angle >= slice.start && mouse_angle < slice.end;
+
+				if(slice.hovered !== is_hovered){
+					slice.hovered = is_hovered;
+					needs_redraw = true;
+				}
+
+				if(is_hovered == true) hovered_slice = slice;
+			}
+
+			if(hovered_slice != null){
+				let tooltip_height = this.#tooltip.getBoundingClientRect().height;
+				this.#tooltip.style.display = "block";
+				this.#tooltip.style.left = event.pageX + "px";
+				this.#tooltip.style.top = event.pageY - tooltip_height - 5 + "px";
+				this.#tooltip.textContent = `${hovered_slice.label}: ${hovered_slice.value} (${hovered_slice["percent"]}%)`;
+			}else this.#tooltip.style.display = "none";
+
+			if(needs_redraw) this.#init_draw_canvas();
+		});
+	}
 }
 
-
-let pie_data = [
-	{"label": "A", "value": 78, "color": "#821131"},
-	{"label": "B", "value": 37, "color": "#1E2A5E"},
-	{"label": "C", "value": 100, "color": "#0D7C66"}
-]
-draw_pie_chart(pie_data, "My pie chart title");
+window.customElements.define("x-pie-chart", Pie);
