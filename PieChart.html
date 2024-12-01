@@ -33,28 +33,29 @@
 		<div>
 			<x-bar-chart>
 				{
-					"direction": "vertical",
+					"direction": "horizontal",
 					"sorted": true,
 					"hue": 231,
-					"opacity": true,
+					"opacity": false,
 					"bar": {
 						"radius": 5,
-						"values": true
+						"values": true,
+						"percentage": true
 					},
 					"x_axis": {
-						"line": true,
+						"line": false,
 						"markers": true,
 						"color": "blue"
 					},
 					"y_axis": {
-						"line": true,
-						"markers": true,
-						"marker_lines": true,
+						"line": false,
+						"markers": false,
+						"marker_lines": false,
 						"color": "blue"
 					},
 					"bars": [
 						{
-							"label": "Apple",
+							"label": "A",
 							"value": 150
 						},
 						{
