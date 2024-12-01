@@ -69,15 +69,17 @@ export default class Bar extends HTMLElement {
 		this.#ctx = this.#canvas.getContext("2d");
 
 		this.#resize_observer();
+
+		this.#init_on_hover_pie();
 	}
 
 	////// APIs
 	#resize_observer(){
-		const resize_observer_object = new ResizeObserver(this.#init);
+		const resize_observer_object = new ResizeObserver(this.#init_draw_canvas);
 		resize_observer_object.observe(this.parentNode);
 	}
 
-	#init = ()=>{
+	#init_draw_canvas = ()=>{
 		this.#set_up_canvas();
 		this.#init_values();
 
@@ -90,6 +92,7 @@ export default class Bar extends HTMLElement {
 		this.#draw_opacity();
 		this.#init_bars();
 		this.#draw_bars();
+		this.#draw_bar_values();
 	}
 
 	////// Helpers
@@ -132,14 +135,21 @@ export default class Bar extends HTMLElement {
 		let longest_label = [...this.#data["bars"]].sort((a, b) => b["label"].length - a["label"].length)[0]["label"];
 		let longest_label_width = this.#ctx.measureText(longest_label).width;
 
-		this.#bar_gap = this.parentNode.clientHeight * 0.01;
+		this.#bar_gap = this.parentNode.clientHeight * 0.01 > 5 ? this.parentNode.clientHeight * 0.01 : 5;
 
 		if(this.#data["direction"] == "horizontal"){
 			this.#bar_scale = (this.#canvas.width - this.#padding * 2) / this.#max_value;
 
+			if(this.#data["bar"]["values"] == true){
+				this.#paddings["right"] -= max_value_width * 2 + this.#padding * 2;
+				this.#bar_scale = (this.#canvas.width - this.#padding * 4 - max_value_width*2) / this.#max_value;
+			}
+
 			if("x_axis" in this.#data && this.#data["x_axis"]["markers"] == true){
 				this.#paddings["left"] += longest_label_width*2 + this.#padding * 2;
 				this.#bar_scale = (this.#canvas.width - this.#paddings["left"] - this.#padding) / this.#max_value;
+
+				if(this.#data["bar"]["values"] == true) this.#bar_scale = (this.#canvas.width - this.#paddings["left"] - this.#padding * 3 - max_value_width * 2) / this.#max_value;
 			}
 
 			if("y_axis" in this.#data && this.#data["y_axis"]["markers"] == true) this.#paddings["bottom"] -= max_value_width * 2;
@@ -179,6 +189,7 @@ export default class Bar extends HTMLElement {
 
 	#init_bars(){
 		const sorted_bar_values = [];
+		this.#total_value = 0;
 		for(const bar of this.#data["bars"]){
 			this.#total_value += bar["value"];
 			sorted_bar_values.push(bar["value"]);
@@ -250,6 +261,10 @@ export default class Bar extends HTMLElement {
 		}
 	}
 
+	#draw_bar_values(){
+		console.log(1);
+	}
+
 	#draw_opacity(){
 		if(!("opacity" in this.#data) || this.#data["opacity"] != true) return;
 		this.#ctx.globalAlpha = 0.8;
@@ -283,20 +298,20 @@ export default class Bar extends HTMLElement {
 		}
 
 		for (let i = 0; i < this.#data["bars"].length; i++) {
-			this.#ctx.textBaseline = "bottom";
+			this.#ctx.textBaseline = "middle";
 			this.#ctx.font = `1em ${this.#font_family}`;
 			this.#ctx.fillStyle = this.#text_color;
 
 			if(this.#data["direction"] == "horizontal"){
 				this.#ctx.textAlign = "right";
-				y = i * this.#bar_width + this.#bar_width/2 + (this.#paddings["top"] * 2);
+				y = this.#paddings["top"] + this.#bar_gap*2 + (i * this.#bar_width) + (this.#bar_width / 2);
 				this.#ctx.fillText(this.#data["bars"][i]["label"], x, y);
 				y += this.#bar_width;
 			}else{
-				x = i * this.#bar_width + this.#bar_width/2 + this.#paddings["left"];
+				x = this.#paddings["left"] - this.#bar_gap + i * this.#bar_width + this.#bar_width/2;
 				if(this.#rotation_needed == true){
 					this.#ctx.save();
-					this.#ctx.translate(x - this.#bar_gap, y);
+					this.#ctx.translate(x, y);
 					this.#ctx.rotate(Math.PI / 2);
 					this.#ctx.textAlign = "left";
 					this.#ctx.fillText(this.#data["bars"][i]["label"], 0, 0);
@@ -367,6 +382,37 @@ export default class Bar extends HTMLElement {
 			}
 
 		}
+	}
+
+	#init_on_hover_pie(){
+		this.#canvas.addEventListener("mousemove", (event)=>{
+			const rect = this.#canvas.getBoundingClientRect();
+			const x = event.clientX - rect.left;
+			const y = event.clientY - rect.top;
+
+			let needs_redraw = false;
+			let hovered_bar= null;
+			for(const bar of this.#bars){
+				const is_hovered = x >= bar.x && x <= bar.x + bar.width && y >= bar.y && y <= bar.y + bar.height;
+
+				if(bar.hovered !== is_hovered){
+					bar.hovered = is_hovered;
+					needs_redraw = true;
+				}
+
+				if(is_hovered == true) hovered_bar = bar;
+			}
+
+			if(hovered_bar != null){
+				let tooltip_height = this.#tooltip.getBoundingClientRect().height;
+				this.#tooltip.style.display = "block";
+				this.#tooltip.style.left = event.pageX + "px";
+				this.#tooltip.style.top = event.pageY - tooltip_height - 5 + "px";
+				this.#tooltip.textContent = `${hovered_bar.label}: ${hovered_bar.value} (${hovered_bar["percent"]}%)`;
+			}else this.#tooltip.style.display = "none";
+
+			if(needs_redraw) this.#init_draw_canvas();
+		});
 	}
 }
 
