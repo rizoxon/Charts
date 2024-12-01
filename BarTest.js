@@ -70,6 +70,8 @@ export default class Bar extends HTMLElement {
 
 		this.#resize_observer();
 
+		this.#init_draw_canvas();
+
 		this.#init_on_hover_pie();
 	}
 
@@ -155,7 +157,6 @@ export default class Bar extends HTMLElement {
 			if("y_axis" in this.#data && this.#data["y_axis"]["markers"] == true) this.#paddings["bottom"] -= max_value_width * 2;
 
 			this.#bar_width = (this.#paddings.bottom - this.#bar_gap - this.#paddings["top"]) / this.#data["bars"].length;
-
 			this.#gap_y_axis_markers = (this.#paddings["right"] - this.#paddings["left"]) / (this.#y_axis_marker_count);
 			this.#y_axis_step_value = this.#max_value / this.#y_axis_marker_count;
 		}
@@ -173,11 +174,9 @@ export default class Bar extends HTMLElement {
 				}
 			}
 
-
 			if("y_axis" in this.#data && this.#data["y_axis"]["markers"] == true) this.#paddings["left"] += max_value_width * 3;
 
 			this.#bar_width = (this.#paddings["right"] - this.#bar_gap - this.#paddings["left"]) / this.#data["bars"].length;
-
 			this.#gap_y_axis_markers = (this.#paddings["bottom"] - this.#padding) / (this.#y_axis_marker_count);
 			this.#y_axis_step_value = this.#max_value / this.#y_axis_marker_count;
 		}
@@ -262,7 +261,22 @@ export default class Bar extends HTMLElement {
 	}
 
 	#draw_bar_values(){
-		console.log(1);
+		if("direction" in this.#data || this.#data["direction"] != "horizontal" || this.#data["bar"]["values"] != true) return;
+
+		for(let i = 0; i < this.#bars.length; i++){
+			let x = this.#bars[i]["width"] + this.#bar_width + this.#bar_gap*2;
+			let y = this.#bars[i]["y"];
+
+			this.#ctx.textBaseline = "middle";
+			this.#ctx.textAlign = "left";
+			this.#ctx.font = `1em ${this.#font_family}`;
+			this.#ctx.fillStyle = this.#text_color;
+
+			y += this.#bar_width/2 - this.#bar_gap/2;
+			this.#ctx.fillText(this.#data["bars"][i]["value"], x, y);
+
+			y += this.#bar_width;
+		}
 	}
 
 	#draw_opacity(){
@@ -287,38 +301,32 @@ export default class Bar extends HTMLElement {
 	#draw_x_axis_markers(){
 		if(this.#data["x_axis"]["markers"] != true) return;
 
-		let x = 0;
-		let y = 0;
-		if(this.#data["direction"] == "horizontal"){
-			y = 0;
-			x = this.#paddings["left"] - this.#padding;
-		}else{
-			y = this.#paddings["bottom"] + this.#padding;
-			x = 0;
-		}
-
-		for (let i = 0; i < this.#data["bars"].length; i++) {
+		for (let i = 0; i < this.#bars.length; i++) {
 			this.#ctx.textBaseline = "middle";
 			this.#ctx.font = `1em ${this.#font_family}`;
 			this.#ctx.fillStyle = this.#text_color;
 
 			if(this.#data["direction"] == "horizontal"){
+				let x = this.#bars[i]["x"] - this.#padding;
+				let y = this.#bars[i]["y"] + this.#bar_width/2;
+
 				this.#ctx.textAlign = "right";
-				y = this.#paddings["top"] + this.#bar_gap*2 + (i * this.#bar_width) + (this.#bar_width / 2);
-				this.#ctx.fillText(this.#data["bars"][i]["label"], x, y);
+				this.#ctx.fillText(this.#bars[i]["label"], x, y);
 				y += this.#bar_width;
 			}else{
-				x = this.#paddings["left"] - this.#bar_gap + i * this.#bar_width + this.#bar_width/2;
+				let x = this.#bars[i]["x"] + this.#bar_width/2 - this.#bar_gap*3;
+				let y = this.#bars[i]["y"] + this.#bars[i]["height"] + this.#padding;
+
 				if(this.#rotation_needed == true){
 					this.#ctx.save();
 					this.#ctx.translate(x, y);
 					this.#ctx.rotate(Math.PI / 2);
 					this.#ctx.textAlign = "left";
-					this.#ctx.fillText(this.#data["bars"][i]["label"], 0, 0);
+					this.#ctx.fillText(this.#bars[i]["label"], 0, 0);
 					this.#ctx.restore();
 				}else{
 					this.#ctx.textAlign = "center";
-					this.#ctx.fillText(this.#data["bars"][i]["label"], x + this.#bar_gap/2, y);
+					this.#ctx.fillText(this.#bars[i]["label"], x, y);
 				}
 				x += this.#bar_width;
 			}
