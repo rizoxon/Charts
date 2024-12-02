@@ -27,31 +27,31 @@
 
 
 		</style>
-		<script type="module" src="BarTest.js"></script>
+		<script type="module" src="Bar_y.js"></script>
 	</head>
 	<body>
 		<div>
-			<x-bar-chart>
+			<x-bar-chart-y>
 				{
-					"direction": "horizontal",
-					"sorted": true,
+					"sorted": false,
 					"hue": 231,
-					"opacity": false,
 					"bar": {
 						"radius": 5,
-						"values": true,
-						"percentage": true
+						"values": {
+							"numeric": true,
+							"percentage": false
+						}
 					},
 					"x_axis": {
-						"line": false,
+						"line": true,
 						"markers": true,
-						"color": "blue"
+						"color": "black"
 					},
 					"y_axis": {
-						"line": false,
+						"line": true,
 						"markers": false,
-						"marker_lines": false,
-						"color": "blue"
+						"marker_lines": true,
+						"color": "black"
 					},
 					"bars": [
 						{
@@ -88,7 +88,7 @@
 						}
 					]
 				}
-			</x-bar-chart>
+			</x-bar-chart-y>
 		</div>
 	</body>
 </html>
