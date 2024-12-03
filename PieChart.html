@@ -31,26 +31,26 @@
 	</head>
 	<body>
 		<div>
-			<x-bar-x-chart>
+			<x-bar-chart-y>
 				{
-					"sorted": false,
+					"sorted": true,
 					"hue": 231,
 					"bar": {
 						"radius": 5,
 						"values": {
 							"numeric": true,
-							"percentage": true
+							"percentage": false
 						}
 					},
 					"x_axis": {
-						"line": true,
-						"markers": true,
+						"line": false,
+						"markers": false,
+						"grid_lines": false,
 						"color": "black"
 					},
 					"y_axis": {
-						"line": true,
-						"markers": true,
-						"grid_lines": true,
+						"line": false,
+						"markers": false,
 						"color": "black"
 					},
 					"bars": [
@@ -88,7 +88,7 @@
 						}
 					]
 				}
-			</x-bar-x-chart>
+			</x-bar-chart-y>
 		</div>
 	</body>
 </html>
