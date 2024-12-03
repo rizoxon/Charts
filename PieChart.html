@@ -31,7 +31,7 @@
 	</head>
 	<body>
 		<div>
-			<x-bar-chart-y>
+			<x-bar-x-chart>
 				{
 					"sorted": false,
 					"hue": 231,
@@ -39,7 +39,7 @@
 						"radius": 5,
 						"values": {
 							"numeric": true,
-							"percentage": false
+							"percentage": true
 						}
 					},
 					"x_axis": {
@@ -49,13 +49,13 @@
 					},
 					"y_axis": {
 						"line": true,
-						"markers": false,
-						"marker_lines": true,
+						"markers": true,
+						"grid_lines": true,
 						"color": "black"
 					},
 					"bars": [
 						{
-							"label": "A",
+							"label": "Apple",
 							"value": 150
 						},
 						{
@@ -88,7 +88,7 @@
 						}
 					]
 				}
-			</x-bar-chart-y>
+			</x-bar-x-chart>
 		</div>
 	</body>
 </html>

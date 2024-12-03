@@ -1,4 +1,4 @@
-export default class Bar_y extends HTMLElement {
+export default class Bar_x extends HTMLElement {
 	#data;
 	#canvas;
 	#ctx;
@@ -9,14 +9,13 @@ export default class Bar_y extends HTMLElement {
 	#hue = "230deg";
 	#x_axis_color = getComputedStyle(document.querySelector(":root")).getPropertyValue("--color-text-primary") || "black";
 	#y_axis_color = getComputedStyle(document.querySelector(":root")).getPropertyValue("--color-text-primary") || "black";
-	#rotated_labels = false;
 
 	#max_value = 0;
 	#padding = 20;
 	#paddings = {};
-	#y_axis_marker_count = 5;
-	#gap_y_axis_markers = 0;
-	#y_axis_step_value = 0;
+	#x_axis_marker_count = 5;
+	#x_axis_marker_gap = 0;
+	#x_axis_step_value = 0;
 
 	#bars = [];
 	#total_value = 0;
@@ -49,7 +48,7 @@ export default class Bar_y extends HTMLElement {
 				width: 100%;
 				height: 100%;
 			}
-			div#XE_charts_bar_tooltip{
+			div#XE_charts_bar_x_tooltip{
 				position: absolute;
 				display: none;
 				background-color: rgba(0, 0, 0, 0.7);
@@ -64,7 +63,7 @@ export default class Bar_y extends HTMLElement {
 
 		// Tooltip element
 		this.#tooltip = document.createElement("div");
-		this.#tooltip.setAttribute("id", "XE_charts_bar_tooltip");
+		this.#tooltip.setAttribute("id", "XE_charts_bar_x_tooltip");
 		this.shadow.appendChild(this.#tooltip);
 
 		// Canvas element
@@ -79,11 +78,11 @@ export default class Bar_y extends HTMLElement {
 
 	////// APIs
 	#resize_observer(){
-		const resize_observer_object = new ResizeObserver(this.#init_draw_canvas);
+		const resize_observer_object = new ResizeObserver(this.#init);
 		resize_observer_object.observe(this.parentNode);
 	}
 
-	#init_draw_canvas = ()=>{
+	#init = ()=>{
 		this.#set_up_canvas();
 		this.#init_values();
 		this.#calculate_values();
@@ -91,7 +90,7 @@ export default class Bar_y extends HTMLElement {
 
 		this.#draw_x_axis_markers();
 		this.#draw_y_axis_markers();
-		this.#draw_y_axis_marker_lines();
+		this.#draw_y_axis_grid_lines();
 
 		this.#draw_bars();
 		this.#draw_bar_values();
@@ -130,7 +129,6 @@ export default class Bar_y extends HTMLElement {
 		if("text_color" in this.#data) this.#text_color = this.#data["text_color"];
 		if("hue" in this.#data) this.#hue = this.#data["hue"];
 		if("font_family" in this.#data) this.#font_family = this.#data["font_family"];
-		if("background" in this.#data) this.#canvas.style.background = this.#data["background"];
 
 		this.#paddings = {
 			top: this.#padding,
@@ -149,62 +147,59 @@ export default class Bar_y extends HTMLElement {
 			if(bar["label"].length > longest_label.length) longest_label = bar["label"];
 		}
 
+		// Set font to measure width correctly
+		this.#ctx.font = `1em ${this.#font_family}`;
+
 		// Max value width as a text
-		let max_numeric_value_width = this.#ctx.measureText(this.#max_value).width;
+		let max_numeric_value_text_width = this.#ctx.measureText(this.#max_value).width;
 
 		// Longest label name width
-		let longest_label_width = this.#ctx.measureText(longest_label).width;
-		if(longest_label_width != 0) longest_label_width += longest_label_width + this.#padding;
+		let longest_label_text_width = this.#ctx.measureText(longest_label).width + this.#padding;
 
-		// Percentage width
-		let percentage_width = this.#ctx.measureText("(100%)").width;
+		let max_percentage_value_text_width = this.#ctx.measureText("(100%)").width;
 
 		// Extract real area width of bars being drawed, remove paddings from 2 sides
-		let bar_area_width = this.#canvas_DPI_width - this.#padding * 2;
+		let raw_bar_area_width = this.#canvas_DPI_width - this.#padding * 2;
 
 		// Bar gap, minimum good looking is 5
 		this.#bar_gap = this.#parent_node_height * 0.01 > 5 ? this.#parent_node_height * 0.01 : 5;
 
 		// Bar scale, needs to remove left and right padding (2x)
-		this.#bar_scale = bar_area_width / this.#max_value;
+		this.#bar_scale = raw_bar_area_width / this.#max_value;
 
 		// Get text width of bar values
-		let bar_text_width = 0;
+		let bar_value_text_width = 0;
 		if("values" in this.#data["bar"]){
-			if(this.#data["bar"]["values"]["numeric"] == true && this.#data["bar"]["values"]["percentage"] == true) bar_text_width = max_numeric_value_width + percentage_width;
-			else if(this.#data["bar"]["values"]["percentage"] == true) bar_text_width = percentage_width;
-			else if(this.#data["bar"]["values"]["numeric"] == true) bar_text_width = max_numeric_value_width;
+			if(this.#data["bar"]["values"]["numeric"] == true && this.#data["bar"]["values"]["percentage"] == true) bar_value_text_width = max_numeric_value_text_width + max_percentage_value_text_width;
+			else if(this.#data["bar"]["values"]["percentage"] == true) bar_value_text_width = max_percentage_value_text_width;
+			else if(this.#data["bar"]["values"]["numeric"] == true) bar_value_text_width = max_numeric_value_text_width;
 		}
-		
-		// if bar_text_width != 0, give space left and right side of text
-		if(bar_text_width != 0) bar_text_width += bar_text_width + this.#padding;
 
 		// If values are true, make space
-		if(this.#data["bar"]["values"]["numeric"] == true || this.#data["bar"]["values"]["percentage"] == true){
-			this.#paddings["right"] -= bar_text_width + this.#padding;
-			this.#bar_scale = (bar_area_width - bar_text_width - this.#padding) / this.#max_value;
+		if(bar_value_text_width > 0){
+			this.#paddings["right"] -= bar_value_text_width + this.#padding;
+			this.#bar_scale = (raw_bar_area_width - bar_value_text_width - this.#padding) / this.#max_value;
 		}
 
-		// If x_axis values are true, make space
-		if("x_axis" in this.#data && this.#data["x_axis"]["markers"] == true){
-			this.#paddings["left"] += longest_label_width;
-			this.#bar_scale = (bar_area_width - this.#paddings["left"] + this.#padding) / this.#max_value;
+		// If y_axis values are true, make space
+		if("y_axis" in this.#data && this.#data["y_axis"]["markers"] == true){
+			this.#paddings["left"] += longest_label_text_width;
+			this.#bar_scale = (raw_bar_area_width - this.#paddings["left"] + this.#padding) / this.#max_value;
 
-			// If both x_axis values and bar values are true, make space for both of them
-			if(this.#data["bar"]["values"]["numeric"] == true || this.#data["bar"]["values"]["percentage"] == true)
-				this.#bar_scale = (bar_area_width - this.#paddings["left"] - bar_text_width) / this.#max_value;
+			// If both y_axis values and bar values are true, make space for both of them
+			if(bar_value_text_width > 0) this.#bar_scale = (raw_bar_area_width - this.#paddings["left"] - bar_value_text_width) / this.#max_value;
 		}
 
 		// If y_axis markers are true, make space
-		if("y_axis" in this.#data && this.#data["y_axis"]["markers"] == true) this.#paddings["bottom"] -= max_numeric_value_width + this.#padding;
+		if("x_axis" in this.#data && this.#data["x_axis"]["markers"] == true) this.#paddings["bottom"] -= max_numeric_value_text_width + this.#padding;
 
 		// calc bar width, based on value after removing top-bottom padding, and gaps
 		this.#bar_width = (this.#paddings["bottom"] - this.#paddings["top"] - this.#bar_gap) / this.#data["bars"].length;
 
-		// y_axis markers gap, based on bar area width (which is after removin left-right paddings)
+		// x_axis markers gap, based on bar area width (which is after removin left-right paddings)
 		// marker count - 1 to make space for 0.
-		this.#gap_y_axis_markers = (this.#paddings["right"] - this.#paddings["left"]) / (this.#y_axis_marker_count - 1);
-		this.#y_axis_step_value = this.#max_value / (this.#y_axis_marker_count - 1);
+		this.#x_axis_marker_gap = (this.#paddings["right"] - this.#paddings["left"]) / (this.#x_axis_marker_count - 1);
+		this.#x_axis_step_value = this.#max_value / (this.#x_axis_marker_count - 1);
 
 		// If sorted
 		if(this.#data["sorted"] == true) this.#data["bars"].sort((a, b) => b["value"] - a["value"]);
@@ -303,8 +298,8 @@ export default class Bar_y extends HTMLElement {
 		this.#ctx.stroke();
 	}
 
-	#draw_x_axis_markers(){
-		if(this.#data["x_axis"]["markers"] != true) return;
+	#draw_y_axis_markers(){
+		if(this.#data["y_axis"]["markers"] != true) return;
 
 		for (const bar of this.#bars) {
 			let x = bar["x"] - this.#padding;
@@ -334,31 +329,31 @@ export default class Bar_y extends HTMLElement {
 		this.#ctx.closePath();
 	}
 
-	#draw_y_axis_markers(){
-		if(this.#data["y_axis"]["markers"] != true) return;
+	#draw_x_axis_markers(){
+		if(this.#data["x_axis"]["markers"] != true) return;
 
-		for (let i = 0; i < this.#y_axis_marker_count; i++) {
+		for (let i = 0; i < this.#x_axis_marker_count; i++) {
 			this.#ctx.textBaseline = "top";
 			this.#ctx.textAlign = "center";
 			this.#ctx.font = `1em ${this.#font_family}`;
 			this.#ctx.fillStyle = this.#text_color;
 
-			let value = (this.#max_value - i * this.#y_axis_step_value).toFixed(0);
-			let x = this.#paddings["right"] - (this.#gap_y_axis_markers * i);
+			let value = (this.#max_value - i * this.#x_axis_step_value).toFixed(0);
+			let x = this.#paddings["right"] - (this.#x_axis_marker_gap * i);
 			let y = this.#paddings["bottom"] + this.#padding;
 
 			this.#ctx.fillText(value, x, y);
 		}
 	}
 
-	#draw_y_axis_marker_lines(){
-		if(this.#data["y_axis"]["marker_lines"] != true) return;
+	#draw_y_axis_grid_lines(){
+		if(this.#data["y_axis"]["grid_lines"] != true) return;
 
 		this.#ctx.lineWidth = 0.5;
 		this.#ctx.strokeStyle = this.#y_axis_color;
 
-		for (let i = 0; i < this.#y_axis_marker_count; i++) {
-			let x = this.#paddings["right"] - (this.#gap_y_axis_markers * i);
+		for (let i = 0; i < this.#x_axis_marker_count; i++) {
+			let x = this.#paddings["right"] - (this.#x_axis_marker_gap * i);
 
 			this.#ctx.beginPath();
 			this.#ctx.moveTo(x, this.#paddings["top"]);
@@ -391,4 +386,4 @@ export default class Bar_y extends HTMLElement {
 	}
 }
 
-window.customElements.define("x-bar-chart-y", Bar_y);
+window.customElements.define("x-bar-x-chart", Bar_x);
