@@ -88,12 +88,11 @@ export default class Bar_x extends HTMLElement {
 		this.#init_values();
 		this.#calculate_values();
 		this.#init_bars();
+		this.#draw_bars();
 
 		this.#draw_x_axis_markers();
 		this.#draw_x_axis_grid_lines();
 		this.#draw_y_axis_markers();
-
-		this.#draw_bars();
 
 		this.#draw_x_axis_line();
 		this.#draw_y_axis_line();
