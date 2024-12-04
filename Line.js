@@ -339,36 +339,35 @@ export default class Line extends HTMLElement{
 	}
 
 	#draw_legends(){
-		const rectWidth = 20;
-		const rectHeight = 10;
+		const rect_width = 20;
+		const rect_height = 10;
 		const gap = 30;
 
-		const posY = this.#paddings.bottom + this.#padding / 1.5;
+		const pos_y = this.#paddings["top"] / 2;
 
 		// put to the center (x axis)
-		let startX = (this.#canvas_DPI_width) / 2;
+		let start_x = (this.#canvas_DPI_width) / 2;
 
 		// - text widths
-		for(let i = 0; i < this.#data["data"].length; i++)
-			startX -= this.#ctx.measureText(this.#data["data"][i]["label"]).width / 2;
+		for(let i = 0; i < this.#data["data"].length; i++) start_x -= this.#ctx.measureText(this.#data["data"][i]["label"]).width;
 
 		// - rectangles
-		startX -= this.#data["data"].length * rectWidth / 2;
+		start_x -= this.#data["data"].length * rect_width / 2;
 
 		// - Gaps
-		startX -= (this.#data["data"].length - 1) * gap / 2;
+		start_x -= (this.#data["data"].length - 1) * gap / 2;
 
 		for(let i = 0; i < this.#data["data"].length; i++){
 			this.#ctx.fillStyle = this.#data["data"][i]["color"];
 
-			this.#ctx.fillRect(startX, posY, rectWidth, rectHeight);
+			this.#ctx.fillRect(start_x, pos_y - rect_height / 2, rect_width, rect_height);
 
-			this.#ctx.textBaseline = "top";
+			this.#ctx.textBaseline = "middle";
 			this.#ctx.textAlign = "left";
 			this.#ctx.font = `bold ${this.#font_size}px 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif`;
-			this.#ctx.fillText(this.#data["data"][i]["label"], startX + gap, posY);
+			this.#ctx.fillText(this.#data["data"][i]["label"], start_x + gap, pos_y);
 
-			startX += rectWidth + this.#ctx.measureText(this.#data["data"][i]["label"]).width + gap;
+			start_x += rect_width + this.#ctx.measureText(this.#data["data"][i]["label"]).width + gap;
 		}
 	}
 
