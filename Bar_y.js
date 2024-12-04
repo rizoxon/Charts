@@ -1,4 +1,4 @@
-export default class Bar_x extends HTMLElement {
+export default class Bar_y extends HTMLElement {
 	#data;
 	#canvas;
 	#ctx;
@@ -49,7 +49,7 @@ export default class Bar_x extends HTMLElement {
 				width: 100%;
 				height: 100%;
 			}
-			div#XE_charts_bar_x_tooltip{
+			div#XE_charts_bar_y_tooltip{
 				position: absolute;
 				display: none;
 				background-color: rgba(0, 0, 0, 0.7);
@@ -64,7 +64,7 @@ export default class Bar_x extends HTMLElement {
 
 		// Tooltip element
 		this.#tooltip = document.createElement("div");
-		this.#tooltip.setAttribute("id", "XE_charts_bar_x_tooltip");
+		this.#tooltip.setAttribute("id", "XE_charts_bar_y_tooltip");
 		this.shadow.appendChild(this.#tooltip);
 
 		// Canvas element
@@ -74,7 +74,7 @@ export default class Bar_x extends HTMLElement {
 
 		this.#resize_observer();
 
-		this.#init_on_hover_pie();
+		this.#init_on_hover_bar();
 	}
 
 	////// APIs
@@ -88,14 +88,16 @@ export default class Bar_x extends HTMLElement {
 		this.#init_values();
 		this.#calculate_values();
 		this.#init_bars();
+
+		this.#draw_x_axis_grid_lines();
+
 		this.#draw_bars();
 
-		this.#draw_x_axis_markers();
-		this.#draw_x_axis_grid_lines();
-		this.#draw_y_axis_markers();
-
 		this.#draw_x_axis_line();
+		this.#draw_x_axis_markers();
+
 		this.#draw_y_axis_line();
+		this.#draw_y_axis_markers();
 	}
 
 	////// Helpers
@@ -128,6 +130,7 @@ export default class Bar_x extends HTMLElement {
 		if("text_color" in this.#data) this.#text_color = this.#data["text_color"];
 		if("hue" in this.#data) this.#hue = this.#data["hue"];
 		if("font_family" in this.#data) this.#font_family = this.#data["font_family"];
+		if("bar" in this.#data && "radius" in this.#data["bar"]) this.#border_radius = this.#data["bar"]["radius"];
 
 		this.#paddings = {
 			top: this.#padding,
@@ -164,7 +167,7 @@ export default class Bar_x extends HTMLElement {
 		// If y_axis markers are true, make space
 		if("y_axis" in this.#data && this.#data["y_axis"]["markers"] == true) this.#paddings["left"] += max_numeric_value_text_width + this.#padding;
 
-		// calc bar width, based on value after removing left-right padding, and gaps
+		// Calc bar width, based on value after removing left-right padding, and gaps
 		this.#bar_width = (this.#paddings["right"] - this.#paddings["left"] - this.#bar_gap) / this.#data["bars"].length;
 
 		// Bar scale, needs to remove top and bottom padding (2x)
@@ -189,9 +192,6 @@ export default class Bar_x extends HTMLElement {
 
 		// If sorted
 		if(this.#data["sorted"] == true) this.#data["bars"].sort((a, b) => b["value"] - a["value"]);
-
-		// Bar radius
-		if("bar" in this.#data && "radius" in this.#data["bar"]) this.#border_radius = this.#data["bar"]["radius"];
 	}
 
 	#init_bars(){
@@ -205,7 +205,7 @@ export default class Bar_x extends HTMLElement {
 
 		this.#bars = [];
 		for(let i = 0; i < this.#data["bars"].length; i++){
-			// prevent minus values
+			// Prevent minus values
 			let bar_value = this.#data["bars"][i]["value"] > 0 ? this.#data["bars"][i]["value"] : 0;
 
 			let x = i * this.#bar_width + this.#bar_gap + this.#paddings["left"];
@@ -254,19 +254,18 @@ export default class Bar_x extends HTMLElement {
 
 	#draw_x_axis_line(){
 		if(!("x_axis" in this.#data) || this.#data["x_axis"]["line"] == false) return;
-		if("color" in this.#data["x_axis"]) this.#x_axis_color = this.#data["x_axis"]["color"];
 
 		this.#ctx.beginPath();
 		this.#ctx.moveTo(this.#paddings.left, this.#paddings.bottom);
 		this.#ctx.lineTo(this.#paddings["right"], this.#paddings.bottom);
 
-		this.#ctx.strokeStyle = this.#x_axis_color;
+		this.#ctx.strokeStyle = this.#data["x_axis"]["color"] || this.#x_axis_color;
 		this.#ctx.lineWidth = 2;
 		this.#ctx.stroke();
 	}
 
 	#draw_x_axis_markers(){
-		if(this.#data["x_axis"]["markers"] != true) return;
+		if(!("x_axis" in this.#data) || this.#data["x_axis"]["markers"] == false) return;
 
 		for (const bar of this.#bars) {
 			let x = bar["x"] + this.#bar_width/2;
@@ -284,7 +283,9 @@ export default class Bar_x extends HTMLElement {
 				this.#ctx.textAlign = "left";
 				this.#ctx.fillText(bar["label"], 0, 0);
 				this.#ctx.restore();
-			}else{
+			}
+
+			else{
 				this.#ctx.textAlign = "center";
 				this.#ctx.fillText(bar["label"], x, y);
 			}
@@ -293,7 +294,7 @@ export default class Bar_x extends HTMLElement {
 	}
 
 	#draw_x_axis_grid_lines(){
-		if(this.#data["x_axis"]["grid_lines"] != true) return;
+		if(!("x_axis" in this.#data) || this.#data["x_axis"]["grid_lines"] !== true) return;
 
 		this.#ctx.lineWidth = 0.5;
 		this.#ctx.strokeStyle = this.#y_axis_color;
@@ -310,20 +311,19 @@ export default class Bar_x extends HTMLElement {
 
 	#draw_y_axis_line(){
 		if(!("y_axis" in this.#data) || this.#data["y_axis"]["line"] == false) return;
-		if("color" in this.#data["y_axis"]) this.#y_axis_color = this.#data["y_axis"]["color"];
 
 		this.#ctx.beginPath();
 		this.#ctx.moveTo(this.#paddings["left"], this.#paddings.bottom);
 		this.#ctx.lineTo(this.#paddings["left"], this.#paddings.top);
 
-		this.#ctx.strokeStyle = this.#y_axis_color;
+		this.#ctx.strokeStyle = this.#data["y_axis"]["color"] || this.#y_axis_color;
 		this.#ctx.lineWidth = 2;
 		this.#ctx.stroke();
 		this.#ctx.closePath();
 	}
 
 	#draw_y_axis_markers(){
-		if(this.#data["y_axis"]["markers"] != true) return;
+		if(!("y_axis" in this.#data) || this.#data["y_axis"]["markers"] == false) return;
 
 		for (let i = 0; i < this.#y_axis_marker_count; i++) {
 			this.#ctx.textBaseline = "middle";
@@ -339,28 +339,24 @@ export default class Bar_x extends HTMLElement {
 		}
 	}
 
-	#init_on_hover_pie(){
+	#init_on_hover_bar(){
 		this.#canvas.addEventListener("mousemove", (event)=>{
 			const rect = this.#canvas.getBoundingClientRect();
 			const x = event.clientX - rect.left;
 			const y = event.clientY - rect.top;
 
 			let hovered_bar= null;
-			for(const bar of this.#bars){
-				const is_hovered = x >= bar.x && x <= bar.x + bar.width && y >= bar.y && y <= bar.y + bar.height;
-
-				if(is_hovered == true) hovered_bar = bar;
-			}
+			for(const bar of this.#bars) if(x >= bar.x && x <= bar.x + bar.width && y >= bar.y && y <= bar.y + bar.height) hovered_bar = bar;
 
 			if(hovered_bar != null){
 				let tooltip_height = this.#tooltip.getBoundingClientRect().height;
 				this.#tooltip.style.display = "block";
 				this.#tooltip.style.left = event.pageX + "px";
 				this.#tooltip.style.top = event.pageY - tooltip_height - 5 + "px";
-				this.#tooltip.textContent = `${hovered_bar.label} ${hovered_bar["display_value"]}`;
+				this.#tooltip.textContent = `${hovered_bar.label}${hovered_bar["display_value"] && ": " + hovered_bar["display_value"]}`;
 			}else this.#tooltip.style.display = "none";
 		});
 	}
 }
 
-window.customElements.define("x-bar-chart-y", Bar_x);
+window.customElements.define("x-bar-y-chart", Bar_y);

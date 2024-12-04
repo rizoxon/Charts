@@ -23,72 +23,53 @@
 				background-color: aliceblue;
 				width: 90dvw;
 				height: 90dvh;
+				margin-bottom: 50px;
 			}
 
 
 		</style>
-		<script type="module" src="Bar_y.js"></script>
+		<script type="module" src="Line.js"></script>
 	</head>
 	<body>
 		<div>
-			<x-bar-chart-y>
+			<x-line-chart>
 				{
-					"sorted": true,
-					"hue": 231,
-					"bar": {
-						"radius": 5,
-						"values": {
-							"numeric": true,
-							"percentage": false
-						}
+					"legends": true,
+					"data_points": true,
+					"fill_type": "gradient",
+					"grid": {
+						"horizontal": true,
+						"vertical": true,
+						"color": "red"
 					},
 					"x_axis": {
-						"line": false,
-						"markers": true,
-						"grid_lines": false,
-						"color": "black"
+						"label": true,
+						"color": "red"
 					},
 					"y_axis": {
-						"line": false,
-						"markers": true,
-						"color": "black"
+						"label": true,
+						"color": "red",
+						"marker_count": 5
 					},
-					"bars": [
+					"data": [
 						{
-							"label": "Apple",
-							"value": 150
+							"label": "A",
+							"color": "#ef9b20",
+							"values": [50, 20, 0, 40, 70, 60, 90, 80, 50, 200, -60, -250, 400]
 						},
 						{
 							"label": "B",
-							"value": 90
+							"color": "#27aeef",
+							"values": [150, 50, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650]
 						},
 						{
 							"label": "C",
-							"value": 200
-						},
-						{
-							"label": "D",
-							"value": 270
-						},
-						{
-							"label": "E",
-							"value": 50
-						},
-						{
-							"label": "F",
-							"value": 70
-						},
-						{
-							"label": "G",
-							"value": 190
-						},
-						{
-							"label": "H",
-							"value": 50
+							"color": "#b33dc6",
+							"values": [-50, 70, 20, 90, 150, 120, 180, 200, 170, 160, 140, 130, 110]
 						}
 					]
 				}
-			</x-bar-chart-y>
+			</x-line-chart>
 		</div>
 	</body>
 </html>

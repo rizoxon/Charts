@@ -73,7 +73,7 @@ export default class Bar_x extends HTMLElement {
 
 		this.#resize_observer();
 
-		this.#init_on_hover_pie();
+		this.#init_on_hover_bar();
 	}
 
 	////// APIs
@@ -88,15 +88,16 @@ export default class Bar_x extends HTMLElement {
 		this.#calculate_values();
 		this.#init_bars();
 
-		this.#draw_x_axis_markers();
-		this.#draw_y_axis_markers();
 		this.#draw_y_axis_grid_lines();
 
 		this.#draw_bars();
 		this.#draw_bar_values();
 
+		this.#draw_x_axis_markers();
 		this.#draw_x_axis_line();
+
 		this.#draw_y_axis_line();
+		this.#draw_y_axis_markers();
 	}
 
 	////// Helpers
@@ -129,6 +130,7 @@ export default class Bar_x extends HTMLElement {
 		if("text_color" in this.#data) this.#text_color = this.#data["text_color"];
 		if("hue" in this.#data) this.#hue = this.#data["hue"];
 		if("font_family" in this.#data) this.#font_family = this.#data["font_family"];
+		if("bar" in this.#data && "radius" in this.#data["bar"]) this.#border_radius = this.#data["bar"]["radius"];
 
 		this.#paddings = {
 			top: this.#padding,
@@ -196,16 +198,13 @@ export default class Bar_x extends HTMLElement {
 		// calc bar width, based on value after removing top-bottom padding, and gaps
 		this.#bar_width = (this.#paddings["bottom"] - this.#paddings["top"] - this.#bar_gap) / this.#data["bars"].length;
 
-		// x_axis markers gap, based on bar area width (which is after removin left-right paddings)
+		// x_axis markers gap, based on bar area width (which is after removing left-right paddings)
 		// marker count - 1 to make space for 0.
 		this.#x_axis_marker_gap = (this.#paddings["right"] - this.#paddings["left"]) / (this.#x_axis_marker_count - 1);
 		this.#x_axis_step_value = this.#max_value / (this.#x_axis_marker_count - 1);
 
 		// If sorted
 		if(this.#data["sorted"] == true) this.#data["bars"].sort((a, b) => b["value"] - a["value"]);
-
-		// Bar radius
-		if("bar" in this.#data && "radius" in this.#data["bar"]) this.#border_radius = this.#data["bar"]["radius"];
 	}
 
 	#init_bars(){
@@ -219,7 +218,7 @@ export default class Bar_x extends HTMLElement {
 
 		this.#bars = [];
 		for(let i = 0; i < this.#data["bars"].length; i++){
-			// prevent minus values
+			// Prevent minus values
 			let bar_value = this.#data["bars"][i]["value"] > 0 ? this.#data["bars"][i]["value"] : 0;
 
 			let y = i * this.#bar_width + this.#bar_gap + this.#paddings["top"];
@@ -287,50 +286,18 @@ export default class Bar_x extends HTMLElement {
 
 	#draw_x_axis_line(){
 		if(!("x_axis" in this.#data) || this.#data["x_axis"]["line"] == false) return;
-		if("color" in this.#data["x_axis"]) this.#x_axis_color = this.#data["x_axis"]["color"];
 
 		this.#ctx.beginPath();
 		this.#ctx.moveTo(this.#paddings.left, this.#paddings.bottom);
 		this.#ctx.lineTo(this.#paddings["right"], this.#paddings.bottom);
 
-		this.#ctx.strokeStyle = this.#x_axis_color;
+		this.#ctx.strokeStyle = this.#data["x_axis"]["color"] || this.#x_axis_color;
 		this.#ctx.lineWidth = 2;
 		this.#ctx.stroke();
-	}
-
-	#draw_y_axis_markers(){
-		if(this.#data["y_axis"]["markers"] != true) return;
-
-		for (const bar of this.#bars) {
-			let x = bar["x"] - this.#padding;
-			let y = bar["y"] + this.#bar_width/2;
-
-			this.#ctx.textBaseline = "middle";
-			this.#ctx.textAlign = "right";
-			this.#ctx.font = `1em ${this.#font_family}`;
-			this.#ctx.fillStyle = this.#text_color;
-			this.#ctx.fillText(bar["label"], x, y);
-
-			y += this.#bar_width;
-		}
-	}
-
-	#draw_y_axis_line(){
-		if(!("y_axis" in this.#data) || this.#data["y_axis"]["line"] == false) return;
-		if("color" in this.#data["y_axis"]) this.#y_axis_color = this.#data["y_axis"]["color"];
-
-		this.#ctx.beginPath();
-		this.#ctx.moveTo(this.#paddings["left"], this.#paddings.bottom);
-		this.#ctx.lineTo(this.#paddings["left"], this.#paddings.top);
-
-		this.#ctx.strokeStyle = this.#y_axis_color;
-		this.#ctx.lineWidth = 2;
-		this.#ctx.stroke();
-		this.#ctx.closePath();
 	}
 
 	#draw_x_axis_markers(){
-		if(this.#data["x_axis"]["markers"] != true) return;
+		if(!("x_axis" in this.#data) || this.#data["x_axis"]["markers"] == false) return;
 
 		for (let i = 0; i < this.#x_axis_marker_count; i++) {
 			this.#ctx.textBaseline = "top";
@@ -346,8 +313,38 @@ export default class Bar_x extends HTMLElement {
 		}
 	}
 
+	#draw_y_axis_line(){
+		if(!("y_axis" in this.#data) || this.#data["y_axis"]["line"] == false) return;
+
+		this.#ctx.beginPath();
+		this.#ctx.moveTo(this.#paddings["left"], this.#paddings.bottom);
+		this.#ctx.lineTo(this.#paddings["left"], this.#paddings.top);
+
+		this.#ctx.strokeStyle = this.#data["y_axis"]["color"] || this.#y_axis_color;
+		this.#ctx.lineWidth = 2;
+		this.#ctx.stroke();
+		this.#ctx.closePath();
+	}
+
+	#draw_y_axis_markers(){
+		if(!("y_axis" in this.#data) || this.#data["y_axis"]["markers"] == false) return;
+
+		for (const bar of this.#bars) {
+			let x = bar["x"] - this.#padding;
+			let y = bar["y"] + this.#bar_width/2;
+
+			this.#ctx.textBaseline = "middle";
+			this.#ctx.textAlign = "right";
+			this.#ctx.font = `1em ${this.#font_family}`;
+			this.#ctx.fillStyle = this.#text_color;
+			this.#ctx.fillText(bar["label"], x, y);
+
+			y += this.#bar_width;
+		}
+	}
+
 	#draw_y_axis_grid_lines(){
-		if(this.#data["y_axis"]["grid_lines"] != true) return;
+		if(!("y_axis" in this.#data) || this.#data["y_axis"]["grid_lines"] !== true) return;
 
 		this.#ctx.lineWidth = 0.5;
 		this.#ctx.strokeStyle = this.#y_axis_color;
@@ -362,28 +359,26 @@ export default class Bar_x extends HTMLElement {
 		}
 	}
 
-	#init_on_hover_pie(){
+	#init_on_hover_bar(){
 		this.#canvas.addEventListener("mousemove", (event)=>{
 			const rect = this.#canvas.getBoundingClientRect();
 			const x = event.clientX - rect.left;
 			const y = event.clientY - rect.top;
 
 			let hovered_bar= null;
-			for(const bar of this.#bars){
-				const is_hovered = x >= bar.x && x <= bar.x + bar.width && y >= bar.y && y <= bar.y + bar.height;
-
-				if(is_hovered == true) hovered_bar = bar;
-			}
+			for(const bar of this.#bars) if(x >= bar.x && x <= bar.x + bar.width && y >= bar.y && y <= bar.y + bar.height) hovered_bar = bar;
 
 			if(hovered_bar != null){
 				let tooltip_height = this.#tooltip.getBoundingClientRect().height;
 				this.#tooltip.style.display = "block";
 				this.#tooltip.style.left = event.pageX + "px";
 				this.#tooltip.style.top = event.pageY - tooltip_height - 5 + "px";
-				this.#tooltip.textContent = `${hovered_bar.label} ${hovered_bar["display_value"]}`;
-			}else this.#tooltip.style.display = "none";
+				this.#tooltip.textContent = `${hovered_bar.label}${hovered_bar["display_value"] && ": " + hovered_bar["display_value"]}`;
+			}
+
+			else this.#tooltip.style.display = "none";
 		});
 	}
 }
 
-window.customElements.define("x-bar-chart-x", Bar_x);
+window.customElements.define("x-bar-x-chart", Bar_x);
