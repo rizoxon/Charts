@@ -177,8 +177,11 @@ export default class Line extends HTMLElement{
 	}
 
 	#draw_main_x_axis(){
-		this.#ctx.beginPath();
+		let linedash = 0;
+		if(this.#data["x_axis"]["linedash"]) linedash = this.#data["x_axis"]["linedash"];
 
+		this.#ctx.beginPath();
+		this.#ctx.setLineDash([linedash]);
 		this.#ctx.moveTo(this.#paddings.left, this.#paddings.bottom);
 		this.#ctx.lineTo(this.#paddings.right, this.#paddings.bottom);
 
@@ -188,8 +191,12 @@ export default class Line extends HTMLElement{
 	}
 
 	#draw_main_y_axis(){
+		let linedash = 0;
+		if(this.#data["y_axis"]["linedash"]) linedash = this.#data["y_axis"]["linedash"];
+
 		this.#ctx.beginPath();
 
+		this.#ctx.setLineDash([linedash]);
 		this.#ctx.moveTo(this.#paddings.left, this.#paddings.top);
 		this.#ctx.lineTo(this.#paddings.left, this.#paddings.bottom);
 
@@ -220,8 +227,12 @@ export default class Line extends HTMLElement{
 	}
 
 	#draw_x_lines(){
+		let linedash = 0;
+		if(this.#data["grid"]["linedash"]) linedash = this.#data["grid"]["linedash"];
+
 		this.#ctx.strokeStyle = this.#grid_color;
 		this.#ctx.lineWidth = this.#grid_line_width;
+		this.#ctx.setLineDash([linedash]);
 
 		for (let i = 0; i < this.#marker_count_y_axis; i++) {
 			this.#ctx.beginPath();
@@ -232,8 +243,12 @@ export default class Line extends HTMLElement{
 	}
 
 	#draw_y_lines(){
+		let linedash = 0;
+		if(this.#data["grid"]["linedash"]) linedash = this.#data["grid"]["linedash"];
+
 		this.#ctx.strokeStyle = this.#grid_color;
 		this.#ctx.lineWidth = this.#grid_line_width;
+		this.#ctx.setLineDash([linedash]);
 
 		for(let i = 0; i < this.#longest_dataset; i++){
 			const x = i * this.#gap_x_axis + this.#padding;
@@ -245,7 +260,11 @@ export default class Line extends HTMLElement{
 	}
 
 	#draw_lines(){
+		let linedash = 0;
+		if(this.#data["linedash"]) linedash = this.#data["linedash"];
+
 		this.#ctx.lineWidth = 2;
+		this.#ctx.setLineDash([linedash]);
 
 		for(let i = 0; i < this.#data["data"].length; i++){
 			this.#ctx.beginPath();
