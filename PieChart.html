@@ -28,53 +28,68 @@
 
 
 		</style>
-		<script type="module" src="Line.js"></script>
+		<script type="module" src="Bar_y.js"></script>
 	</head>
 	<body>
 		<div>
-			<x-line-chart>
+			<x-bar-y-chart>
 				{
-					"legends": false,
-					"data_points": false,
-					"fill_type": "none",
-					"linedash": 2,
-					"grid": {
-						"horizontal": true,
-						"vertical": true,
-						"color": "green",
-						"linedash": 5
+					"sorted": true,
+					"hue": 231,
+					"bar": {
+						"radius": 10,
+						"values": true
 					},
 					"x_axis": {
-						"label": true,
-						"color": "black",
-						"markers":["Jan", "Feb", "Mar", "Apr", "May"],
-						"linedash": 0
+						"line": true,
+						"markers": true,
+						"grid_lines": true,
+						"griddash": 2,
+						"linedash": 3,
+						"color": "blue"
 					},
 					"y_axis": {
-						"label": false,
-						"color": "blue",
-						"marker_count": 5,
-						"linedash": 0
+						"line": true,
+						"markers": true,
+						"linedash": 3,
+						"color": "blue"
 					},
-					"data": [
+					"bars": [
 						{
-							"label": "Apple",
-							"color": "#ef9b20",
-							"values": [50, 20, 0, 40, 70, 60, 90, 80, 50, 200, -60, -250, 400]
+							"label": "T",
+							"value": 150
 						},
 						{
-							"label": "Microsoft",
-							"color": "#27aeef",
-							"values": [150, 50, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650]
+							"label": "B",
+							"value": 90
 						},
 						{
-							"label": "Nvidia",
-							"color": "#b33dc6",
-							"values": [-50, 70, 20, 90, 150, 120, 180, 200, 170, 160, 140, 130, 110]
+							"label": "C",
+							"value": 200
+						},
+						{
+							"label": "D",
+							"value": 270
+						},
+						{
+							"label": "E",
+							"value": 50
+						},
+						{
+							"label": "F",
+							"value": 70
+						},
+						{
+							"label": "G",
+							"value": 190
+						},
+						{
+							"label": "H",
+							"value": 50
 						}
 					]
 				}
-			</x-line-chart>
+			</x-bar-y-chart>
 		</div>
 	</body>
 </html>
