@@ -28,31 +28,36 @@
 
 
 		</style>
-		<script type="module" src="Bar_y.js"></script>
+		<script type="module" src="Bar_x.js"></script>
 	</head>
 	<body>
 		<div>
-			<x-bar-y-chart>
+			<x-bar-x-chart>
 				{
 					"sorted": true,
 					"hue": 231,
 					"bar": {
 						"radius": 10,
-						"values": true
+						"values": {
+							"numeric": true,
+							"percentage": true
+						}
+					},
+					"grid": {
+						"line_dash": 2,
+						"color": "red"
 					},
 					"x_axis": {
 						"line": true,
 						"markers": true,
-						"grid_lines": true,
-						"griddash": 2,
-						"linedash": 3,
-						"color": "blue"
+						"line_dash": 20,
+						"color": "green"
 					},
 					"y_axis": {
 						"line": true,
 						"markers": true,
-						"linedash": 3,
-						"color": "blue"
+						"line_dash": 10,
+						"color": "red"
 					},
 					"bars": [
 						{
@@ -89,7 +94,7 @@
 						}
 					]
 				}
-			</x-bar-y-chart>
+			</x-bar-x-chart>
 		</div>
 	</body>
 </html>
