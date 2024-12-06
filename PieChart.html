@@ -28,73 +28,53 @@
 
 
 		</style>
-		<script type="module" src="Bar_x.js"></script>
+		<script type="module" src="Line.js"></script>
 	</head>
 	<body>
 		<div>
-			<x-bar-x-chart>
+			<x-line-chart>
 				{
-					"sorted": true,
-					"hue": 231,
-					"bar": {
-						"radius": 10,
-						"values": {
-							"numeric": true,
-							"percentage": true
-						}
-					},
+					"legends": true,
+					"data_points": true,
+					"fill_type": "gradient",
+					"line_dash": 10,
 					"grid": {
+						"horizontal": true,
+						"vertical": true,
 						"line_dash": 2,
 						"color": "red"
 					},
 					"x_axis": {
-						"line": true,
-						"markers": true,
-						"line_dash": 20,
-						"color": "green"
+						"label": true,
+						"color": "blue",
+						"line_dash": 0,
+						"markers": ["jan", "feb", "march"]
 					},
 					"y_axis": {
-						"line": true,
-						"markers": true,
-						"line_dash": 10,
-						"color": "red"
+						"label": true,
+						"color": "blue",
+						"line_dash": 0,
+						"marker_count": 10
 					},
-					"bars": [
+					"data": [
 						{
-							"label": "T",
-							"value": 150
+							"label": "A",
+							"color": "#ef9b20",
+							"values": [50, 20, 0, 40, 70, 60, 90, 80, 50, 200, -60, -250, 400]
 						},
 						{
 							"label": "B",
-							"value": 90
+							"color": "#27aeef",
+							"values": [150, 50, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650]
 						},
 						{
 							"label": "C",
-							"value": 200
-						},
-						{
-							"label": "D",
-							"value": 270
-						},
-						{
-							"label": "E",
-							"value": 50
-						},
-						{
-							"label": "F",
-							"value": 70
-						},
-						{
-							"label": "G",
-							"value": 190
-						},
-						{
-							"label": "H",
-							"value": 50
+							"color": "#b33dc6",
+							"values": [-50, 70, 20, 90, 150, 120, 180, 200, 170, 160, 140, 130, 110]
 						}
 					]
 				}
-			</x-bar-x-chart>
+			</x-line-chart>
 		</div>
 	</body>
 </html>
